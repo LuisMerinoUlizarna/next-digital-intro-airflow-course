@@ -1,0 +1,19 @@
+# Astro / Airflow
+.astro/
+airflow_settings.yaml
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Env
+.env
