@@ -29,6 +29,13 @@ un estado diferente.
 ```
 
 Ejecuta el DAG y observa los colores en la vista Grid o Graph.
+
+### Documentación oficial de Airflow
+
+- [Task lifecycle](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/tasks.html#task-instances)
+- [Trigger rules](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dags.html#trigger-rules)
+- [Retries](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/tasks.html#retries)
+- [Branching](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html#branchpythonoperator)
 """
 
 import logging

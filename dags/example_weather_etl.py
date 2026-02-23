@@ -18,6 +18,13 @@ Este DAG demuestra un pipeline ETL (Extract, Transform, Load) sencillo:
 No requiere credenciales ni configuración externa.
 
 API utilizada: https://open-meteo.com/ (gratuita, sin API key)
+
+### Documentación oficial de Airflow
+
+- [TaskFlow API](https://airflow.apache.org/docs/apache-airflow/stable/tutorial/taskflow.html)
+- [Conceptos: DAGs](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dags.html)
+- [Conceptos: Tasks](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/tasks.html)
+- [XCom](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html)
 """
 
 import base64

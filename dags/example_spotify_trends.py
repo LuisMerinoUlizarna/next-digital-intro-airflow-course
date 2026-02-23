@@ -29,6 +29,13 @@ Está diseñado para enseñar los conceptos fundamentales de Airflow de forma pr
 ```
 
 No requiere credenciales ni APIs externas. Usa datos simulados.
+
+### Documentación oficial de Airflow
+
+- [Branching](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html#branchpythonoperator)
+- [Trigger rules](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dags.html#trigger-rules)
+- [Dynamic task mapping](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/dynamic-task-mapping.html)
+- [TaskFlow API](https://airflow.apache.org/docs/apache-airflow/stable/tutorial/taskflow.html)
 """
 
 import logging

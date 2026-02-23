@@ -23,6 +23,12 @@ fetch_songs  →  rank_top_songs  →  show_daily_summary
 - **show_daily_summary**: Recibe el top 5 y lo imprime.
 
 No requiere APIs ni credenciales. Solo Python puro.
+
+### Documentación oficial de Airflow
+
+- [XCom](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html)
+- [TaskFlow API](https://airflow.apache.org/docs/apache-airflow/stable/tutorial/taskflow.html)
+- [Conceptos: Tasks](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/tasks.html)
 """
 
 import logging

@@ -1,10 +1,22 @@
-# Overview
+# Curso introductorio de Apache Airflow
 
-Welcome to Astronomer! This project was generated after you ran 'astro dev init' using the Astronomer CLI. This readme describes the contents of the project, as well as how to run Apache Airflow on your local machine.
+> Este repositorio está basado en la plantilla oficial de [Astronomer](https://github.com/astronomer/astro-cli), generada con `astro dev init`. Se ha ampliado con DAGs educativos para un curso universitario de introducción a Airflow.
 
-Astronomer is the best place to host Apache Airflow -- try it out with a free trial at [astronomer.io](https://www.astronomer.io/).
+## DAGs de ejemplo incluidos
 
-# Project Contents
+| DAG | Archivo | Qué enseña |
+|-----|---------|------------|
+| **Astronauts ETL** | [`example_astronauts.py`](dags/example_astronauts.py) | DAG original de Astronomer. TaskFlow API, dynamic task mapping y llamadas a APIs. |
+| **Weather ETL** | [`example_weather_etl.py`](dags/example_weather_etl.py) | Pipeline ETL completo (extract → transform → chart → load). Genera un gráfico de temperatura con matplotlib y lo muestra en la UI de Airflow. API gratuita Open-Meteo, sin credenciales. |
+| **Spotify XCom** | [`example_spotify_xcom.py`](dags/example_spotify_xcom.py) | Concepto de XCom explicado paso a paso. Pipeline lineal: obtener canciones → rankear top 5 → mostrar resumen. |
+| **Spotify Trends** | [`example_spotify_trends.py`](dags/example_spotify_trends.py) | Branching, tareas en paralelo y trigger rules. Simula un análisis de tendencias musicales con caminos condicionales (pop vs rock). |
+| **S3 Pipeline** | [`example_s3_pipeline.py`](dags/example_s3_pipeline.py) | Integración con Amazon S3 (free tier). Genera un CSV de ventas, lo sube a S3 y lo lee de vuelta. Requiere configurar conexión AWS. |
+| **Task States** | [`example_task_states.py`](dags/example_task_states.py) | Muestra los estados más comunes de las tareas: success, failed, up_for_retry, upstream_failed y skipped. Ideal para entender los colores de la UI. |
+| **Ejercicio: Movie Pipeline** | [`exercise_movie_pipeline.py`](dags/exercise_movie_pipeline.py) | Esqueleto incompleto con TODOs para que los alumnos practiquen. Usa la API de OMDb (películas). |
+
+---
+
+# Contenido del proyecto (Astronomer)
 
 Your Astro project contains the following files and folders:
 

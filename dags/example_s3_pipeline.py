@@ -26,6 +26,13 @@ Este DAG demuestra cómo interactuar con Amazon S3 desde Airflow:
    ```
 
 Documentación: https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/
+
+### Documentación oficial de Airflow
+
+- [TaskFlow API](https://airflow.apache.org/docs/apache-airflow/stable/tutorial/taskflow.html)
+- [Gestión de conexiones](https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html)
+- [Amazon provider](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/)
+- [S3Hook](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/hooks/s3/index.html)
 """
 
 import csv

@@ -23,6 +23,13 @@ Usa la API gratuita de OMDb (https://www.omdbapi.com/) para buscar películas.
 - Paso de datos entre tareas con XCom (TaskFlow API)
 - Acceso seguro a diccionarios con .get()
 - Logging con el módulo logging
+
+### Documentación oficial de Airflow
+
+- [TaskFlow API](https://airflow.apache.org/docs/apache-airflow/stable/tutorial/taskflow.html)
+- [XCom](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html)
+- [Conceptos: DAGs](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dags.html)
+- [Logging en tareas](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/logging-tasks.html)
 """
 
 import logging
