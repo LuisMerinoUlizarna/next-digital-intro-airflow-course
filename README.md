@@ -29,24 +29,76 @@ Your Astro project contains the following files and folders:
 - plugins: Add custom or community plugins for your project to this file. It is empty by default.
 - airflow_settings.yaml: Use this local-only file to specify Airflow Connections, Variables, and Pools instead of entering them in the Airflow UI as you develop DAGs in this project.
 
-# Deploy Your Project Locally
+# Levantar el entorno local de Airflow
 
-1. Start Airflow on your local machine by running 'astro dev start'.
+## Requisitos previos
 
-This command will spin up 4 Docker containers on your machine, each for a different Airflow component:
+- **Docker Desktop** instalado y corriendo (icono de la ballena activo).
+- **Astro CLI** instalado. Verifica con:
+  ```bash
+  astro version
+  ```
 
-- Postgres: Airflow's Metadata Database
-- Webserver: The Airflow component responsible for rendering the Airflow UI
-- Scheduler: The Airflow component responsible for monitoring and triggering tasks
-- Triggerer: The Airflow component responsible for triggering deferred tasks
+## Paso 1: Arrancar Airflow
 
-2. Verify that all 4 Docker containers were created by running 'docker ps'.
+Desde la raíz del proyecto, ejecuta:
 
-Note: Running 'astro dev start' will start your project with the Airflow Webserver exposed at port 8080 and Postgres exposed at port 5432. If you already have either of those ports allocated, you can either stop your existing Docker containers or change the port.
+```bash
+astro dev start
+```
 
-3. Access the Airflow UI for your local Airflow project. To do so, go to http://localhost:8080/ and log in with 'admin' for both your Username and Password.
+Esto levanta 4 contenedores Docker:
 
-You should also be able to access your Postgres Database at 'localhost:5432/postgres'.
+| Contenedor | Función |
+|------------|---------|
+| **Postgres** | Base de datos de metadatos de Airflow |
+| **Webserver** | Sirve la interfaz web (UI) |
+| **Scheduler** | Programa y lanza las tareas |
+| **Triggerer** | Gestiona tareas diferidas (deferrable) |
+
+Verifica que los 4 están corriendo:
+
+```bash
+docker ps
+```
+
+> Si el puerto 8080 o 5432 ya están ocupados, para los contenedores que los usen o cambia los puertos en el archivo de configuración.
+
+## Paso 2: Acceder a la UI de Airflow
+
+Abre en el navegador:
+
+```
+http://localhost:8080
+```
+
+Credenciales por defecto:
+- **Usuario**: `admin`
+- **Contraseña**: `admin`
+
+## Paso 3: Probar el DAG de Astronautas
+
+1. En la UI, busca el DAG **`example_astronauts`** en la lista.
+2. Si aparece como pausado (toggle gris), haz click en el toggle para activarlo (se pondrá azul). Este DAG viene con `is_paused_upon_creation=False`, así que debería estar activo por defecto.
+3. Haz click en el botón **"Trigger DAG"** (▶) para lanzar una ejecución manual.
+4. Entra al DAG y observa:
+   - **Vista Graph**: verás `get_astronauts` conectado a múltiples instancias de `print_astronaut_craft` (una por cada astronauta en el espacio). Esto es **dynamic task mapping**.
+   - **Vista Grid**: verás el estado de cada tarea (verde = success).
+5. Haz click en cualquier instancia de `print_astronaut_craft` → pestaña **Log** para ver el nombre del astronauta y su nave.
+
+## Paso 4: Parar el entorno
+
+Cuando termines, para los contenedores con:
+
+```bash
+astro dev stop
+```
+
+Para eliminar los contenedores y volúmenes (reset completo):
+
+```bash
+astro dev kill
+```
 
 # Deploy Your Project to Astronomer
 
