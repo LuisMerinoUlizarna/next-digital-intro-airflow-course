@@ -187,7 +187,8 @@ def example_spotify_trends():
         """Análisis detallado cuando domina el pop/mainstream."""
         task_instance = context["ti"]
         genre_analysis: dict = task_instance.xcom_pull(task_ids=TASK_ID_ANALYZE_GENRES)
-        pop_streams: int = genre_analysis["streams_by_genre"].get("Pop", 0)
+        streams_by_genre: dict = genre_analysis.get("streams_by_genre", {})
+        pop_streams: int = streams_by_genre.get("Pop", 0)
 
         insight_message = (
             f"Tendencia POP dominante con {pop_streams:,} streams en Pop. "
@@ -201,7 +202,8 @@ def example_spotify_trends():
         """Análisis detallado cuando domina el rock/alternativo."""
         task_instance = context["ti"]
         genre_analysis: dict = task_instance.xcom_pull(task_ids=TASK_ID_ANALYZE_GENRES)
-        rock_streams: int = genre_analysis["streams_by_genre"].get("Rock", 0)
+        streams_by_genre: dict = genre_analysis.get("streams_by_genre", {})
+        rock_streams: int = streams_by_genre.get("Rock", 0)
 
         insight_message = (
             f"Tendencia ROCK dominante con {rock_streams:,} streams. "

@@ -25,9 +25,10 @@ first DAG tutorial: https://docs.astronomer.io/learn/get-started-with-airflow
 # decoradores @dag y @task que simplifican la definición de DAGs y tareas.
 # Ver: https://www.astronomer.io/docs/learn/airflow-decorators
 # ============================================================================
+
+import requests
 from airflow.sdk import Asset, dag, task
 from pendulum import datetime, duration
-import requests
 
 
 # -------------- #
@@ -77,8 +78,9 @@ def example_astronauts():
         try:
             r = requests.get("http://api.open-notify.org/astros.json")
             r.raise_for_status()
-            number_of_people_in_space = r.json()["number"]
-            list_of_people_in_space = r.json()["people"]
+            response_data = r.json()
+            number_of_people_in_space = response_data.get("number", 0)
+            list_of_people_in_space = response_data.get("people", [])
         except:
             print("API currently not available, using hardcoded data instead.")
             number_of_people_in_space = 12
@@ -106,8 +108,8 @@ def example_astronauts():
         pasa el resultado de get_astronauts(), Airflow infiere la dependencia
         automáticamente (sin necesidad de usar >> o set_downstream).
         """
-        craft = person_in_space["craft"]
-        name = person_in_space["name"]
+        craft = person_in_space.get("craft", "Unknown")
+        name = person_in_space.get("name", "Unknown")
         print(f"{name} is in space flying on the {craft}! {greeting}")
 
     # ------------------------------------ #

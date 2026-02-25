@@ -24,13 +24,18 @@ API utilizada: https://open-meteo.com/ (gratuita, sin API key)
 - [XCom](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html)
 """
 
-import json
 import logging
+from datetime import datetime as dt
 from pathlib import Path
 
+import matplotlib
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import requests
 from airflow.sdk import dag, task
 from pendulum import datetime, duration
+
+matplotlib.use("Agg")
 
 # --------------- #
 # DAG Constants   #
@@ -127,13 +132,6 @@ def example_weather_etl():
         Genera un gráfico de temperatura horaria con matplotlib
         y lo guarda como PNG en /tmp/airflow_weather/.
         """
-        from datetime import datetime as dt
-
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.dates as mdates
-        import matplotlib.pyplot as plt
-
         hourly_times: list[str] = weather_report.get("hourly_times", [])
         hourly_temps: list[float] = weather_report.get("hourly_temperatures", [])
 

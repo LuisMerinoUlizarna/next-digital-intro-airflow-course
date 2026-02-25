@@ -40,6 +40,7 @@ import io
 import logging
 from datetime import date
 
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.sdk import dag, task
 from pendulum import datetime, duration
 
@@ -101,8 +102,6 @@ def example_s3_pipeline():
     @task
     def upload_csv_to_s3(csv_content: str) -> str:
         """Sube el contenido CSV al bucket de S3 usando S3Hook."""
-        from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-
         s3_hook = S3Hook(aws_conn_id=AWS_CONN_ID)
         today_iso: str = date.today().isoformat()
         s3_object_key = f"{S3_KEY_PREFIX}/ventas_{today_iso}.csv"
@@ -120,8 +119,6 @@ def example_s3_pipeline():
     @task
     def read_csv_from_s3(s3_object_key: str) -> None:
         """Lee el CSV desde S3 y calcula estadísticas básicas de ventas."""
-        from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-
         s3_hook = S3Hook(aws_conn_id=AWS_CONN_ID)
         raw_csv: str = s3_hook.read_key(
             key=s3_object_key, bucket_name=S3_BUCKET_NAME
