@@ -21,11 +21,11 @@ un estado diferente.
 ```
   always_succeeds ──→ depends_on_success ──→ final_report
         |                                        ↑
+        ├──→ check_condition                     |
+        |       /    \\                           |
+        |  skipped   executed                    |
+        |                                        |
   always_fails ──→ retries_then_fails ──→ upstream_failed_task
-        |
-  check_condition
-      /    \\
- skipped   executed
 ```
 
 Ejecuta el DAG y observa los colores en la vista Grid o Graph.
@@ -135,10 +135,9 @@ def example_task_states():
     # =========================================================
 
     def _choose_path() -> str:
-        """Elige aleatoriamente qué tarea ejecutar."""
-        chosen = random.choice(["path_executed", "path_skipped"])
-        log.info("Camino elegido: %s", chosen)
-        return chosen
+        """Siempre elige path_executed, dejando path_skipped en estado SKIPPED (rosa)."""
+        log.info("Camino elegido: path_executed (path_skipped quedará SKIPPED)")
+        return "path_executed"
 
     branch_operator = BranchPythonOperator(
         task_id="check_condition",
@@ -203,18 +202,22 @@ def example_task_states():
     success_msg = always_succeeds()
     chain_success = depends_on_success(success_msg)
 
-    # Rama que falla
+    # Rama que falla → upstream_failed
     fail = always_fails()
     retry_fail = retries_then_fails()
     upstream_skip = upstream_failed_task()
     retry_fail >> upstream_skip
 
-    # Rama con branching (skip)
-    branch_operator.set_upstream(fail)
-    branch_operator >> [path_executed(), path_skipped()]
+    # Rama con branching → skipped
+    # El branch depende de always_succeeds para que se ejecute correctamente.
+    # Así el branch elige un camino (SUCCESS) y descarta el otro (SKIPPED).
+    branch_operator.set_upstream(success_msg)
+    executed = path_executed()
+    skipped = path_skipped()
+    branch_operator >> [executed, skipped]
 
     # Reporte final espera a todo
-    [chain_success, upstream_skip] >> final_report()
+    [chain_success, upstream_skip, executed, skipped] >> final_report()
 
 
 example_task_states()

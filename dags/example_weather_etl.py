@@ -5,15 +5,12 @@ Este DAG demuestra un pipeline ETL (Extract, Transform, Load) sencillo:
 
 1. **Extract**: Obtiene datos del clima de Madrid (actual + últimas 24h) desde Open-Meteo.
 2. **Transform**: Procesa los datos y calcula estadísticas básicas.
-3. **Chart**: Genera un gráfico de temperatura con matplotlib y lo muestra en la UI.
-4. **Load**: Guarda el JSON en disco y muestra el resumen + imagen en la interfaz de Airflow.
+3. **Chart**: Genera un gráfico de temperatura con matplotlib y lo guarda en disco.
 
-### Cómo ver los resultados en la UI de Airflow
+### Cómo ver los resultados
 
-1. Ejecuta el DAG.
-2. Ve a la vista **Grid** o **Graph**.
-3. Haz click en la tarea **load_weather_report** (cuadrado verde).
-4. Selecciona la pestaña **Notes** → ahí verás el JSON y el gráfico.
+- **Logs**: click en cualquier tarea → pestaña Log.
+- **Gráfico PNG**: se guarda en `/tmp/airflow_weather/temperature_chart.png`
 
 No requiere credenciales ni configuración externa.
 
@@ -27,7 +24,6 @@ API utilizada: https://open-meteo.com/ (gratuita, sin API key)
 - [XCom](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html)
 """
 
-import base64
 import json
 import logging
 from pathlib import Path
@@ -73,7 +69,7 @@ log = logging.getLogger(__name__)
     catchup=False,  # No ejecuta runs pasados; solo programa desde ahora en adelante
 )
 def example_weather_etl():
-    """Pipeline ETL que obtiene, transforma, grafica y almacena datos del clima."""
+    """Pipeline ETL que obtiene, transforma y grafica datos del clima."""
 
     @task
     def extract_weather_data() -> dict:
@@ -126,10 +122,10 @@ def example_weather_etl():
         return weather_report
 
     @task
-    def generate_temperature_chart(weather_report: dict) -> str:
+    def generate_temperature_chart(weather_report: dict) -> None:
         """
-        Genera un gráfico de temperatura horaria con matplotlib.
-        Retorna la imagen codificada en base64.
+        Genera un gráfico de temperatura horaria con matplotlib
+        y lo guarda como PNG en /tmp/airflow_weather/.
         """
         from datetime import datetime as dt
 
@@ -143,7 +139,7 @@ def example_weather_etl():
 
         if not hourly_times or not hourly_temps:
             log.warning("No hay datos horarios para generar el gráfico.")
-            return ""
+            return
 
         time_objects = [dt.fromisoformat(t) for t in hourly_times]
 
@@ -195,76 +191,13 @@ def example_weather_etl():
         fig.savefig(chart_path, dpi=120, bbox_inches="tight")
         plt.close(fig)
 
-        chart_base64: str = base64.b64encode(chart_path.read_bytes()).decode("utf-8")
-        log.info("Gráfico generado y codificado en base64.")
-        return chart_base64
-
-    @task
-    def load_weather_report(
-        weather_report: dict, chart_base64: str, **context
-    ) -> None:
-        """
-        Guarda el JSON en disco y escribe el resumen + gráfico como nota
-        de la tarea para que sea visible en la UI de Airflow.
-
-        **Cómo verlo**: Grid/Graph → click en esta tarea → pestaña "Notes".
-        """
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-        # --- Guardar JSON en disco ---
-        report_to_save = {
-            k: v for k, v in weather_report.items()
-            if k not in ("hourly_times", "hourly_temperatures")
-        }
-        observation_time = weather_report.get("observation_time", "unknown")
-        output_file = OUTPUT_DIR / f"weather_{observation_time}.json"
-        output_file.write_text(
-            json.dumps(report_to_save, indent=2, ensure_ascii=False)
-        )
-        log.info("JSON guardado en %s", output_file)
-
-        # --- Construir nota con JSON + imagen para la UI de Airflow ---
-        current_temp = weather_report.get("temperature_celsius", 0.0)
-        wind = weather_report.get("wind_speed_kmh", 0.0)
-        humidity = weather_report.get("humidity_percent", 0.0)
-
-        json_formatted = json.dumps(report_to_save, indent=2, ensure_ascii=False)
-
-        note_content = (
-            f"## 🌡️ Clima en Madrid\n\n"
-            f"**Temperatura**: {current_temp}°C | "
-            f"**Viento**: {wind} km/h | "
-            f"**Humedad**: {humidity}%\n\n"
-            f"**Última actualización**: {observation_time}\n\n"
-            f"---\n\n"
-            f"### Datos JSON\n\n"
-            f"```json\n{json_formatted}\n```\n\n"
-        )
-
-        if chart_base64:
-            note_content += (
-                f"---\n\n"
-                f"### Gráfico de temperatura (últimas 24h)\n\n"
-                f"![Temperatura Madrid]"
-                f"(data:image/png;base64,{chart_base64})\n"
-            )
-
-        # Escribir la nota en la task instance → visible en la UI
-        task_instance = context.get("ti")
-        if task_instance is not None:
-            task_instance.note = note_content
-            log.info(
-                "Nota escrita en la task instance. "
-                "Ve a Grid → click en esta tarea → pestaña 'Notes'."
-            )
-
+        log.info("Gráfico guardado en %s", chart_path)
         log.info("Resumen: %s", weather_report.get("summary", "N/A"))
 
-    # --- Dependencias: extract >> transform >> chart >> load ---
+    # --- Dependencias: extract >> transform >> chart ---
     raw_data = extract_weather_data()
     transformed_data = transform_weather_data(raw_data)
-    chart_b64 = generate_temperature_chart(transformed_data)
-    load_weather_report(transformed_data, chart_b64)
+    generate_temperature_chart(transformed_data)
 
 
 example_weather_etl()

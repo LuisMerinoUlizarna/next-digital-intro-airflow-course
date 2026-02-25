@@ -20,7 +20,11 @@ first DAG tutorial: https://docs.astronomer.io/learn/get-started-with-airflow
 ![Picture of the ISS](https://www.esa.int/var/esa/storage/images/esa_multimedia/images/2010/02/space_station_over_earth/10293696-3-eng-GB/Space_Station_over_Earth_card_full.jpg)
 """
 
- # This DAG uses the TaskFlow API. See: https://www.astronomer.io/docs/learn/airflow-decorators
+# ============================================================================
+# TASKFLOW API: en lugar de usar PythonOperator y DAG(), usamos los
+# decoradores @dag y @task que simplifican la definición de DAGs y tareas.
+# Ver: https://www.astronomer.io/docs/learn/airflow-decorators
+# ============================================================================
 from airflow.sdk import Asset, dag, task
 from pendulum import datetime, duration
 import requests
@@ -30,46 +34,45 @@ import requests
 # DAG Definition #
 # -------------- #
 
-
-# instantiate a DAG with the @dag decorator and set DAG parameters (see: https://www.astronomer.io/docs/learn/airflow-dag-parameters)
+# TASKFLOW API - @dag:
+# En vez de crear el DAG con "with DAG(...) as dag:" (forma clásica),
+# decoramos una función Python con @dag. Todo lo que se defina dentro
+# de esta función formará parte del DAG automáticamente.
 @dag(
-    start_date=datetime(2025, 4, 1),  # date after which the DAG can be scheduled
-    schedule="@daily",  # see: https://www.astronomer.io/docs/learn/scheduling-in-airflow for options
-    max_consecutive_failed_dag_runs=5,  # auto-pauses the DAG after 5 consecutive failed runs, experimental
-    doc_md=__doc__,  # add DAG Docs in the UI, see https://www.astronomer.io/docs/learn/custom-airflow-ui-docs-tutorial
+    start_date=datetime(2025, 4, 1),
+    schedule="@daily",
+    max_consecutive_failed_dag_runs=5,
+    doc_md=__doc__,
     default_args={
-        "owner": "Astro",  # owner of this DAG in the Airflow UI
-        "retries": 3,  # tasks retry 3 times before they fail
-        "retry_delay": duration(seconds=5),  # tasks wait 30s in between retries
-    },  # default_args are applied to all tasks in a DAG
-    tags=["example", "space"],  # add tags in the UI
-    is_paused_upon_creation=False, # start running the DAG as soon as its created
+        "owner": "Astro",
+        "retries": 3,
+        "retry_delay": duration(seconds=5),
+    },
+    tags=["example", "space"],
+    is_paused_upon_creation=False,
 )
 def example_astronauts():
 
     # ---------------- #
     # Task Definitions #
     # ---------------- #
-    # the @task decorator turns any Python function into an Airflow task
-    # any @task decorated function that is called inside the @dag decorated
-    # function is automatically added to the DAG.
-    # if one exists for your use case you can still use traditional Airflow operators
-    # and mix them with @task decorators. Checkout registry.astronomer.io for available operators
-    # see: https://www.astronomer.io/docs/learn/airflow-decorators for information about @task
-    # see: https://www.astronomer.io/docs/learn/what-is-an-operator for information about traditional operators
 
+    # TASKFLOW API - @task:
+    # En vez de usar PythonOperator(task_id="...", python_callable=func),
+    # simplemente decoramos la función con @task y se convierte en una
+    # tarea de Airflow. El task_id se toma del nombre de la función.
     @task(
         outlets=[Asset("current_astronauts")]
-    )  # Define that this task produces updates to an Airflow Dataset.
-    # Downstream DAGs can be scheduled based on combinations of Dataset updates
-    # coming from tasks in the same Airflow instance or calls to the Airflow API.
-    # See: https://www.astronomer.io/docs/learn/airflow-datasets]
+    )
     def get_astronauts(**context) -> list[dict]:
         """
-        This task uses the requests library to retrieve a list of Astronauts
-        currently in space. The results are pushed to XCom with a specific key
-        so they can be used in a downstream pipeline. The task returns a list
-        of Astronauts to be used in the next task.
+        Consulta la API de Open Notify para obtener la lista de astronautas
+        actualmente en el espacio.
+
+        TASKFLOW API - return automático a XCom:
+        Al hacer "return list_of_people_in_space", el valor se guarda
+        automáticamente en XCom sin necesidad de llamar a xcom_push().
+        Las tareas downstream pueden recibir este valor como argumento.
         """
         try:
             r = requests.get("http://api.open-notify.org/astros.json")
@@ -84,39 +87,54 @@ def example_astronauts():
                 {"craft": "ISS", "name": "Claude Nicollier"},
             ]
 
+        # Este xcom_push es MANUAL y adicional (para guardar un dato extra).
+        # El return de abajo ya hace xcom_push automático gracias a TaskFlow.
         context["ti"].xcom_push(
             key="number_of_people_in_space", value=number_of_people_in_space
         )
+
+        # TASKFLOW API: este return guarda la lista en XCom automáticamente
         return list_of_people_in_space
 
     @task
     def print_astronaut_craft(greeting: str, person_in_space: dict) -> None:
         """
-        This task creates a print statement with the name of an
-        Astronaut in space and the craft they are flying on from
-        the API request results of the previous task, along with a
-        greeting which is hard-coded in this example.
+        Imprime el nombre del astronauta y la nave en la que viaja.
+
+        TASKFLOW API - dependencias implícitas:
+        Esta tarea recibe "person_in_space" como argumento. Cuando se le
+        pasa el resultado de get_astronauts(), Airflow infiere la dependencia
+        automáticamente (sin necesidad de usar >> o set_downstream).
         """
         craft = person_in_space["craft"]
         name = person_in_space["name"]
-
         print(f"{name} is in space flying on the {craft}! {greeting}")
 
     # ------------------------------------ #
     # Calling tasks + Setting dependencies #
     # ------------------------------------ #
 
-    # each call of a @task decorated function creates one task in the Airflow UI
-    # passing the return value of one @task decorated function to another one
-    # automatically creates a task dependency
-
-    # This task uses dynamic task mapping to create a variable number of copies
-    # of the print_astronaut_craft task at runtime in parallel
-    # See: https://www.astronomer.io/docs/learn/dynamic-tasks
+    # DYNAMIC TASK MAPPING:
+    # En vez de crear un número fijo de tareas, usamos .partial() y .expand()
+    # para que Airflow cree una instancia de la tarea POR CADA elemento
+    # de la lista que devuelve get_astronauts().
+    #
+    # - .partial(greeting="Hello! :)") → fija el argumento "greeting" con un
+    #   valor constante. Todas las copias de la tarea recibirán este mismo valor.
+    #
+    # - .expand(person_in_space=get_astronauts()) → crea N copias de la tarea,
+    #   una por cada astronauta en la lista. Si la API devuelve 12 astronautas,
+    #   se crean 12 tareas en paralelo. Si mañana hay 7, se crean 7.
+    #   El número se resuelve en TIEMPO DE EJECUCIÓN, no al definir el DAG.
+    #
+    # TASKFLOW API - dependencia implícita:
+    # Al pasar get_astronauts() como argumento, Airflow sabe que
+    # print_astronaut_craft depende de get_astronauts sin usar >>.
+    
     print_astronaut_craft.partial(greeting="Hello! :)").expand(
         person_in_space=get_astronauts()
     )
 
 
-# Instantiate the DAG
+# Instanciar el DAG llamando a la función decorada con @dag
 example_astronauts()
